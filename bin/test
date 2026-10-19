@@ -3,6 +3,7 @@
 require "pathname"
 require "optparse"
 require 'yaml'
+require 'bundler'
 
 @all = false
 @verbose = false
@@ -124,6 +125,24 @@ class Runner
 
   def rbs_collection_install
     sh! 'rbs', 'collection', 'install', chdir: test_dir.to_s
+    drop_unbundled_rubygems_sources
+  end
+
+  # `rbs collection install` runs outside Bundler, so any installed gem that
+  # ships sig/ becomes a `type: rubygems` entry. `rbs validate` and `steep`
+  # run under the root bundle, where only its gems can be found, so other
+  # entries raise UnknownLibraryError. Drop them, as CI never installs them.
+  def drop_unbundled_rubygems_sources
+    lock = YAML.load(collection_lock_yaml.read)
+    bundled = Bundler::LockfileParser.new(root_gemfile_lock.read).specs.map(&:name)
+    dropped, kept = lock['gems'].partition do |gem|
+      gem.dig('source', 'type') == 'rubygems' && !bundled.include?(gem['name'])
+    end
+    return if dropped.empty?
+
+    puts "Dropping RBS of gems outside the root bundle: #{dropped.map { _1['name'] }.join(', ')}"
+    lock['gems'] = kept
+    collection_lock_yaml.write(YAML.dump(lock))
   end
 
   def rename_gemfile_lock
@@ -172,6 +191,7 @@ class Runner
   def gemfile = test_dir.join('Gemfile')
   def gemfile_lock = test_dir.join('Gemfile.lock')
   def steepfile = test_dir.join('Steepfile')
+  def root_gemfile_lock = Pathname(__dir__).join('../Gemfile.lock')
 end
 
 failed_gems = []
