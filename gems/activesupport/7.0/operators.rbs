@@ -49,10 +49,18 @@ end
 
 # active_support/core_ext/date/calculations.rb
 class Date
-  def +: (ActiveSupport::Duration other) -> (Date | Time | ActiveSupport::TimeWithZone)
+  # Returns +self+'s class for a Duration of days, weeks, months or years.
+  # On a Date, a Duration with seconds, minutes or hours returns a Time,
+  # or an ActiveSupport::TimeWithZone when Time.zone is set; RBS cannot
+  # tell the two kinds of Duration apart.
+  def +: (ActiveSupport::Duration other) -> self
        | ...
 
-  def -: (ActiveSupport::Duration other) -> (Date | Time | ActiveSupport::TimeWithZone)
+  # Returns +self+'s class for a Duration of days, weeks, months or years.
+  # On a Date, a Duration with seconds, minutes or hours returns a Time,
+  # or an ActiveSupport::TimeWithZone when Time.zone is set; RBS cannot
+  # tell the two kinds of Duration apart.
+  def -: (ActiveSupport::Duration other) -> self
        | ...
 end
 

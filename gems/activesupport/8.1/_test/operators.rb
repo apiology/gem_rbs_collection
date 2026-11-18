@@ -51,8 +51,7 @@ scores = ActiveSupport::HashWithIndifferentAccess.new
 scores.[]=(:alice, 1).succ
 scores[:alice].succ
 
-# Date plus or minus a Duration can return a Time or TimeWithZone
-# @type var moment: Date | Time | ActiveSupport::TimeWithZone
-moment = Date.today + 1.hour
-moment = Date.today - 1.day
-moment.to_date
+# Date and DateTime plus or minus a Duration keep their class
+(Date.today - 1.day).downto(Date.today - 7)
+(Date.today + 1.week).upto(Date.today + 1.month)
+(DateTime.now + 1.hour).hour
